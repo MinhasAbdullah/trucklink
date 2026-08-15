@@ -4,13 +4,19 @@ import {
   Truck, User, Clock, CheckCircle, XCircle, AlertCircle,
   Calendar, ArrowLeft, Download, FileText, Eye, MessageSquare,
   History, ChevronRight, Home, RefreshCw, Bell,
-  Briefcase, MapPin, DollarSign, ExternalLink, File,
-  Check, X, Plus, Filter, Search, ThumbsUp, Award
+  Briefcase, MapPin, DollarSign, ThumbsUp, Award,
+  File, Check, X, Plus, Filter, Search, Edit,
+  Shield, Star, Users, TrendingUp, FileCheck,
+  FileWarning, FileSignature, IdCard, CalendarDays
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DriverStatusTracking = () => {
   const navigate = useNavigate();
+  
+  // ============================================
+  // STATE MANAGEMENT
+  // ============================================
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [downloading, setDownloading] = useState(false);
@@ -18,7 +24,14 @@ const DriverStatusTracking = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   
-  // Mock status data - In production, this comes from API
+  // ============================================
+  // PROFILE DATA - Comes from Backend API
+  // ============================================
+  // 📌 BACKEND INTEGRATION: 
+  
+  // Endpoint: GET /api/drivers/profile/me/
+  // in Response  status, documents, opportunities etc fetch.
+  // ============================================
   const [profileData, setProfileData] = useState({
     status: "pending", // pending | approved | rejected | in_review
     submittedAt: "2024-01-15T10:30:00",
@@ -51,11 +64,18 @@ const DriverStatusTracking = () => {
         icon: AlertCircle
       }
     ],
+    // 📌 DOCUMENTS: In production, come from  backend 
+    // Admin verification status also come from  backend 
     documents: {
       license: { uploaded: true, verified: true, name: "driver_license.pdf", size: "2.4 MB" },
       medical: { uploaded: true, verified: false, name: "medical_card.pdf", size: "1.8 MB" },
-      additional: { uploaded: true, verified: false, name: "certificate.pdf", size: "0.5 MB" }
+      cnic: { uploaded: true, verified: false, name: "cnic_front_back.pdf", size: "1.2 MB" },
+      drivingRecord: { uploaded: true, verified: false, name: "driving_record.pdf", size: "0.8 MB" },
+      backgroundConsent: { uploaded: false, verified: false, name: "", size: "" },
+      additional: { uploaded: true, verified: false, name: "certificate.pdf", size: "0.5 MB" },
+      resume: { uploaded: false, verified: false, name: "", size: "" }
     },
+    // 📌 OPPORTUNITIES: appear after approvel from admin
     opportunities: [
       {
         id: 1,
@@ -100,15 +120,102 @@ const DriverStatusTracking = () => {
     ]
   });
 
+  // ============================================
+  // FETCH PROFILE DATA FROM BACKEND
+  // ============================================
+  // 📌 BACKEND INTEGRATION:
+  // 
+  // Endpoint: GET /api/drivers/profile/me/
+  // Headers: Authorization: Bearer <access_token>
+  // 
+  // Response Example:
+  // {
+  //   status: "pending" | "approved" | "rejected",
+  //   submittedAt: "2024-01-15T10:30:00",
+  //   lastUpdated: "2024-01-15T14:45:00",
+  //   completion: 85,
+  //   adminComment: "Please update your medical card",
+  //   documents: { ... },
+  //   statusHistory: [ ... ]
+  // }
+  // ============================================
+  const fetchProfileData = async () => {
+    setLoading(true);
+    try {
+      // ==========================================
+      // 🔌 BACKEND INTEGRATION - UNCOMMENT WHEN READY
+      // ==========================================
+      // const token = localStorage.getItem('access_token');
+      // if (!token) {
+      //   navigate("/auth");
+      //   return;
+      // }
+      // const response = await axios.get('/api/drivers/profile/me/', {
+      //   headers: { 
+      //     'Authorization': `Bearer ${token}`,
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
+      // setProfileData(response.data);
+      
+      // ==========================================
+      // 📝 FOR NOW - Using mock data (Remove when backend ready)
+      // ==========================================
+      console.log("📊 Fetching profile data from backend...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // ✅ For testing: Check if admin approved from localStorage
+      const adminAction = localStorage.getItem('adminAction');
+      if (adminAction === 'approve') {
+        setProfileData(prev => ({ ...prev, status: 'approved' }));
+        localStorage.removeItem('adminAction');
+      } else if (adminAction === 'reject') {
+        setProfileData(prev => ({ ...prev, status: 'rejected' }));
+        localStorage.removeItem('adminAction');
+      }
+      
+    } catch (error) {
+      console.error("❌ Error fetching profile:", error);
+      // ==========================================
+      // 🔌 BACKEND INTEGRATION - Error Handling
+      // ==========================================
+      // if (error.response?.status === 401) {
+      //   // Token expired or invalid - Redirect to login
+      //   localStorage.removeItem('access_token');
+      //   localStorage.removeItem('refresh_token');
+      //   navigate("/auth");
+      // } else if (error.response?.status === 404) {
+      //   // Profile not found - Redirect to profile form
+      //   navigate("/driver/profile");
+      // }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================
+  // LOAD DATA ON COMPONENT MOUNT
+  // ============================================
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  // ============================================
+  // STATUS HELPER FUNCTIONS
+  // ============================================
+  // ✅ These functions determine the UI based on status
+  // Status values: pending, in_review, approved, rejected
+  // ============================================
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
       case "in_review":
-        return "yellow";
+        return "yellow";      // 🟡 Yellow - Waiting
       case "approved":
-        return "green";
+        return "green";       // 🟢 Green - Approved
       case "rejected":
-        return "red";
+        return "red";         // 🔴 Red - Rejected
       default:
         return "gray";
     }
@@ -118,13 +225,13 @@ const DriverStatusTracking = () => {
     switch (status) {
       case "pending":
       case "in_review":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "approved":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
       case "rejected":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
@@ -163,7 +270,7 @@ const DriverStatusTracking = () => {
       case "in_review":
         return "Your profile is currently being reviewed by our admin team. We'll notify you once the review is complete.";
       case "approved":
-        return "🎉 Congratulations! Your profile has been approved. You are now visible to recruiters.";
+        return "Congratulations! Your profile has been approved. You are now visible to recruiters.";
       case "rejected":
         return "Your profile has been rejected. Please review the feedback and make necessary changes.";
       default:
@@ -175,17 +282,23 @@ const DriverStatusTracking = () => {
   const statusColor = getStatusColor(profileData.status);
   const statusBg = getStatusBgColor(profileData.status);
 
+  // ============================================
+  // REFRESH HANDLER
+  // ============================================
+  // ✅ Fetches latest profile data from backend
+  // ============================================
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1500);
+    fetchProfileData();
   };
 
-  // 📄 Download Profile - Creates and downloads a PDF-like HTML
+  // ============================================
+  // DOWNLOAD PROFILE
+  // ============================================
+  // ✅ Generates and downloads profile as HTML file
+  // Contains all user data from localStorage
+  // ============================================
   const handleDownloadProfile = () => {
     setDownloading(true);
-    
     try {
       const profileHTML = generateProfileHTML();
       const blob = new Blob([profileHTML], { type: 'text/html' });
@@ -197,16 +310,19 @@ const DriverStatusTracking = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
       setTimeout(() => setDownloading(false), 500);
     } catch (error) {
       console.error("Error downloading profile:", error);
       setDownloading(false);
-      alert("❌ Failed to download profile. Please try again.");
+      alert("Failed to download profile. Please try again.");
     }
   };
 
-  // 📄 Generate Profile HTML
+  // ============================================
+  // GENERATE PROFILE HTML
+  // ============================================
+  // ✅ Creates a formatted HTML document with all profile data
+  // ============================================
   const generateProfileHTML = () => {
     const currentDate = new Date().toLocaleDateString('en-US', {
       year: 'numeric', month: 'long', day: 'numeric'
@@ -237,13 +353,13 @@ const DriverStatusTracking = () => {
     }
     .header { 
       text-align: center; 
-      border-bottom: 3px solid #2d6a4f; 
+      border-bottom: 3px solid #059669; 
       padding-bottom: 30px;
       margin-bottom: 30px;
     }
     .header h1 { 
       font-size: 32px; 
-      color: #2d6a4f;
+      color: #059669;
     }
     .header .subtitle { color: #4a6a5a; margin-top: 8px; }
     .section { 
@@ -255,7 +371,7 @@ const DriverStatusTracking = () => {
     }
     .section h2 { 
       font-size: 18px; 
-      color: #2d6a4f;
+      color: #059669;
       margin-bottom: 16px;
       border-bottom: 2px solid #e8f5ee;
       padding-bottom: 10px;
@@ -275,7 +391,7 @@ const DriverStatusTracking = () => {
       border-radius: 20px;
       font-weight: 600;
       background: #e8f5ee;
-      color: #2d6a4f;
+      color: #059669;
     }
     .footer {
       text-align: center;
@@ -291,13 +407,13 @@ const DriverStatusTracking = () => {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🚛 TruckLink Driver Profile</h1>
+      <h1>TruckLink Driver Profile</h1>
       <p class="subtitle">Generated on ${currentDate}</p>
       <p>Status: <span class="status-badge">${getStatusText(profileData.status)}</span></p>
     </div>
 
     <div class="section">
-      <h2>👤 Personal Information</h2>
+      <h2>Personal Information</h2>
       <div class="row"><span class="label">Full Name</span><span class="value">${localStorage.getItem('driverName') || 'Not Provided'}</span></div>
       <div class="row"><span class="label">Email</span><span class="value">${localStorage.getItem('driverEmail') || 'Not Provided'}</span></div>
       <div class="row"><span class="label">Phone</span><span class="value">${localStorage.getItem('driverPhone') || 'Not Provided'}</span></div>
@@ -306,7 +422,7 @@ const DriverStatusTracking = () => {
     </div>
 
     <div class="section">
-      <h2>📜 License & CDL</h2>
+      <h2>License & CDL</h2>
       <div class="row"><span class="label">CDL Class</span><span class="value">${localStorage.getItem('driverCDL') || 'Not Provided'}</span></div>
       <div class="row"><span class="label">License Number</span><span class="value">${localStorage.getItem('driverLicenseNumber') || 'Not Provided'}</span></div>
       <div class="row"><span class="label">License Expiry</span><span class="value">${localStorage.getItem('driverLicenseExpiry') || 'Not Provided'}</span></div>
@@ -314,24 +430,24 @@ const DriverStatusTracking = () => {
     </div>
 
     <div class="section">
-      <h2>💼 Experience</h2>
+      <h2>Experience</h2>
       <div class="row"><span class="label">Total Experience</span><span class="value">${localStorage.getItem('driverExperience') || '0'} years</span></div>
       <div class="row"><span class="label">Preferred Route</span><span class="value">${localStorage.getItem('driverRoute') || 'Not Specified'}</span></div>
       <div class="row"><span class="label">Equipment</span><span class="value">${localStorage.getItem('driverEquipment') || 'None'}</span></div>
     </div>
 
     <div class="section">
-      <h2>📎 Documents</h2>
+      <h2>Documents</h2>
       ${Object.entries(profileData.documents).map(([key, doc]) => `
         <div class="doc-item">
           <span>${key.charAt(0).toUpperCase() + key.slice(1)}</span>
-          <span>${doc.uploaded ? '✅ Uploaded' : '❌ Not Uploaded'} ${doc.verified ? '✓ Verified' : ''}</span>
+          <span>${doc.uploaded ? 'Uploaded' : 'Not Uploaded'} ${doc.verified ? 'Verified' : ''}</span>
         </div>
       `).join('')}
     </div>
 
     <div class="section">
-      <h2>⏱️ Status History</h2>
+      <h2>Status History</h2>
       ${profileData.statusHistory.map(event => `
         <div class="row">
           <span class="label">${event.label}</span>
@@ -350,22 +466,72 @@ const DriverStatusTracking = () => {
     `;
   };
 
-  // 👁️ View Document
+  // ============================================
+  // VIEW DOCUMENT
+  // ============================================
+  // ✅ Shows document details (name, size, status)
+  // 📌 BACKEND INTEGRATION: In production, actual file open 
+  // ============================================
   const handleViewDocument = (docKey) => {
     const doc = profileData.documents[docKey];
     if (!doc || !doc.uploaded) {
-      alert("Document not uploaded yet.");
+      alert("Document not uploaded yet. Please upload the document first.");
       return;
     }
     setViewingDoc(docKey);
-    alert(`📄 Document: ${doc.name}\n📦 Size: ${doc.size}\n✅ Status: ${doc.verified ? 'Verified' : 'Pending Verification'}\n\n(Note: In production, this would open the actual document file)`);
+    alert(`Document: ${doc.name}\nSize: ${doc.size}\nStatus: ${doc.verified ? 'Verified' : 'Pending Verification'}\n\n(Note: In production, this would open the actual document file)`);
   };
 
-  // 🏆 Apply for Job
+  // ============================================
+  // APPLY FOR JOB
+  // ============================================
+  // 📌 BACKEND INTEGRATION:
+  // Jab user "Apply Now" click karega, yeh API call hogi.
+  // Endpoint: POST /api/drivers/jobs/{jobId}/apply/
+  // Headers: Authorization: Bearer <access_token>
+  // 
+  //when admin approve the profile, then only the user can apply for jobs.
+  // ============================================
   const handleApplyJob = (jobId) => {
-    alert(`✅ Application submitted for job #${jobId}!`);
+    // ==========================================
+    // 🔌 BACKEND INTEGRATION - UNCOMMENT WHEN READY
+    // ==========================================
+    // try {
+    //   const token = localStorage.getItem('access_token');
+    //   if (!token) {
+    //     alert("Please login again");
+    //     navigate("/auth");
+    //     return;
+    //   }
+    //   const response = await axios.post(`/api/drivers/jobs/${jobId}/apply/`, {}, {
+    //     headers: { 
+    //       'Authorization': `Bearer ${token}`,
+    //       'Content-Type': 'application/json'
+    //     }
+    //   });
+    //   alert("✅ Application submitted successfully!");
+    //   // Refresh opportunities list
+    //   fetchProfileData();
+    // } catch (error) {
+    //   if (error.response?.status === 401) {
+    //     alert("Session expired. Please login again.");
+    //     navigate("/auth");
+    //   } else if (error.response?.status === 400) {
+    //     alert(error.response.data.message || "Already applied for this job");
+    //   } else {
+    //     alert("Failed to submit application. Please try again.");
+    //   }
+    // }
+    
+    // ==========================================
+    // 📝 FOR NOW - Mock alert (Remove when backend ready)
+    // ==========================================
+    alert(`✅ Application submitted successfully for job #${jobId}!`);
   };
 
+  // ============================================
+  // DATE FORMATTER
+  // ============================================
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
@@ -377,7 +543,11 @@ const DriverStatusTracking = () => {
     }).format(date);
   };
 
-  // Filter opportunities
+  // ============================================
+  // FILTER OPPORTUNITIES
+  // ============================================
+  // ✅ Filters jobs based on search term and status
+  // ============================================
   const filteredOpportunities = profileData.opportunities.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           job.company.toLowerCase().includes(searchTerm.toLowerCase());
@@ -385,12 +555,50 @@ const DriverStatusTracking = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // ============================================
+  // DERIVED STATE
+  // ============================================
   const isApproved = profileData.status === "approved";
+  const totalDocs = Object.keys(profileData.documents).length;
+  const uploadedDocs = Object.values(profileData.documents).filter(d => d.uploaded).length;
 
+  // ============================================
+  // DOCUMENT LABELS
+  // ============================================
+  const docLabels = {
+    license: { label: "Driver License", icon: FileText },
+    medical: { label: "Medical Card", icon: FileCheck },
+    cnic: { label: "CNIC / ID Card", icon: IdCard },
+    drivingRecord: { label: "Driving Record", icon: FileWarning },
+    backgroundConsent: { label: "Background Consent", icon: FileSignature },
+    additional: { label: "Additional Documents", icon: File },
+    resume: { label: "Resume / CV", icon: FileText }
+  };
+
+  // ============================================
+  // MAIN RENDER
+  // ============================================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0f7f4] via-[#e8f5ee] to-[#d4ede3] p-4 py-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/95 via-white/90 to-teal-50/95" />
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'url("/images/truck-bg.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(0px)',
+            transform: 'scale(1.05)',
+          }}
+        />
+      </div>
+
+      <div className="max-w-6xl mx-auto relative z-10 p-4 py-8">
+        {/* ==========================================
+             HEADER
+             ========================================== */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -399,46 +607,53 @@ const DriverStatusTracking = () => {
           <div>
             <button
               onClick={() => navigate("/driver/dashboard")}
-              className="flex items-center gap-2 text-[#4a6a5a] hover:text-[#2d6a4f] transition-colors text-sm mb-2"
+              className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors text-sm mb-2 group"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Dashboard
             </button>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#1a2a3a] to-[#2d6a4f] bg-clip-text text-transparent">
-              Profile Status
-            </h1>
+            <div className="flex items-center gap-3">
+              <Truck className="w-8 h-8 text-emerald-600" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-emerald-600 bg-clip-text text-transparent">
+                Profile Status
+              </h1>
+            </div>
           </div>
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl text-[#4a6a5a] hover:text-[#2d6a4f] shadow-sm hover:shadow transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl text-gray-500 hover:text-emerald-600 shadow-sm hover:shadow transition-all disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span className="text-sm">Refresh</span>
           </button>
         </motion.div>
 
-        {/* Main Status Card */}
+        {/* ==========================================
+             MAIN STATUS CARD
+             ==========================================
+             
+             ========================================== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className={`bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-6 md:p-8 border-2 ${
-            profileData.status === 'approved' ? 'border-green-300' :
-            profileData.status === 'rejected' ? 'border-red-300' :
-            'border-yellow-300'
+          className={`bg-white rounded-2xl shadow-xl p-6 md:p-8 border-l-8 ${
+            profileData.status === 'approved' ? 'border-emerald-500' :
+            profileData.status === 'rejected' ? 'border-red-500' :
+            'border-yellow-500'
           } mb-6`}
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              {/* Status Icon with Pulse Animation */}
+              {/* Status Icon with Pulse Animation for Pending */}
               <div className={`relative w-20 h-20 rounded-full flex items-center justify-center ${
-                profileData.status === 'approved' ? 'bg-green-100' :
+                profileData.status === 'approved' ? 'bg-emerald-100' :
                 profileData.status === 'rejected' ? 'bg-red-100' :
                 'bg-yellow-100'
               }`}>
                 <StatusIcon className={`w-10 h-10 ${
-                  profileData.status === 'approved' ? 'text-green-600' :
+                  profileData.status === 'approved' ? 'text-emerald-600' :
                   profileData.status === 'rejected' ? 'text-red-600' :
                   'text-yellow-600'
                 }`} />
@@ -448,23 +663,23 @@ const DriverStatusTracking = () => {
               </div>
               <div>
                 <h2 className={`text-2xl font-bold ${
-                  profileData.status === 'approved' ? 'text-green-700' :
+                  profileData.status === 'approved' ? 'text-emerald-700' :
                   profileData.status === 'rejected' ? 'text-red-700' :
                   'text-yellow-700'
                 }`}>
                   {getStatusText(profileData.status)}
                 </h2>
-                <p className="text-sm text-[#4a6a5a]">
+                <p className="text-sm text-gray-500">
                   Last updated: {formatDate(profileData.lastUpdated)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <span className={`px-4 py-1.5 rounded-full text-xs font-medium ${statusBg}`}>
-                Profile {profileData.completion}% Complete
+                {profileData.completion}% Complete
               </span>
               {profileData.status === 'approved' && (
-                <span className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <span className="flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
                   <Award className="w-3 h-3" />
                   Verified Driver
                 </span>
@@ -474,12 +689,12 @@ const DriverStatusTracking = () => {
 
           {/* Status Description */}
           <div className={`mt-4 p-4 rounded-xl border ${
-            profileData.status === 'approved' ? 'bg-green-50 border-green-200' :
+            profileData.status === 'approved' ? 'bg-emerald-50 border-emerald-200' :
             profileData.status === 'rejected' ? 'bg-red-50 border-red-200' :
             'bg-yellow-50 border-yellow-200'
           }`}>
             <p className={`text-sm flex items-start gap-2 ${
-              profileData.status === 'approved' ? 'text-green-700' :
+              profileData.status === 'approved' ? 'text-emerald-700' :
               profileData.status === 'rejected' ? 'text-red-700' :
               'text-yellow-700'
             }`}>
@@ -488,28 +703,51 @@ const DriverStatusTracking = () => {
             </p>
           </div>
 
-          {/* Action Buttons */}
+          {/* ==========================================
+               ACTION BUTTONS
+               ==========================================
+               ✅ according to status, show buttons:
+               - Rejected: Edit Profile button show 
+               - Approved: View Public Profile button show 
+               - Download Profile: always available
+               ========================================== */}
           <div className="mt-6 flex flex-wrap gap-3">
+            {/* 📌 BACKEND INTEGRATION: 
+                when admin reject this will show, user can edit profile and resubmit
+                Admin endpoint: POST /api/drivers/moderation/{id}/ 
+                Body: { action: "reject", comment: "Reason" }
+            */}
             {profileData.status === "rejected" && (
-              <button className="px-5 py-2.5 bg-[#2d6a4f] text-white rounded-xl font-medium hover:bg-[#1a4a35] transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+              <button 
+                onClick={() => navigate("/driver/profile")}
+                className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              >
                 <Edit className="w-4 h-4" />
                 Edit Profile
               </button>
             )}
+            
+            {/* 📌 BACKEND INTEGRATION: 
+               when admin approve this will show, user can view public profile
+                Admin endpoint: POST /api/drivers/moderation/{id}/ 
+                Body: { action: "approve" }
+            */}
             {profileData.status === "approved" && (
-              <button className="px-5 py-2.5 bg-[#2d6a4f] text-white rounded-xl font-medium hover:bg-[#1a4a35] transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+              <button className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2">
                 <Eye className="w-4 h-4" />
                 View Public Profile
               </button>
             )}
+            
+            {/* Download Profile - Always Available */}
             <button 
               onClick={handleDownloadProfile}
               disabled={downloading}
-              className="px-5 py-2.5 border-2 border-[#dce8e2] rounded-xl text-[#4a6a5a] hover:border-[#2d6a4f] hover:text-[#2d6a4f] transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-5 py-2.5 bg-white border-2 border-emerald-600 text-emerald-600 rounded-xl font-medium hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {downloading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#2d6a4f] border-t-transparent" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent" />
                   Downloading...
                 </>
               ) : (
@@ -522,31 +760,44 @@ const DriverStatusTracking = () => {
           </div>
         </motion.div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap border-b border-[#dce8e2] mb-6">
+        {/* ==========================================
+             TABS
+             ==========================================
+             ✅ Four tabs: Overview, History, Documents, Opportunities
+             ========================================== */}
+        <div className="flex flex-wrap border-b border-gray-200 mb-6 bg-white rounded-t-xl px-2">
           {['overview', 'history', 'documents', 'opportunities'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 text-sm font-medium transition-all relative capitalize ${
                 activeTab === tab
-                  ? "text-[#2d6a4f]"
-                  : "text-[#8aa89a] hover:text-[#4a6a5a]"
+                  ? "text-emerald-600"
+                  : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              {tab === 'opportunities' && isApproved ? '💼 Opportunities' : tab}
+              {tab === 'overview' && 'Overview'}
+              {tab === 'history' && 'History'}
+              {tab === 'documents' && 'Documents'}
+              {tab === 'opportunities' && (isApproved ? 'Opportunities' : 'Opportunities')}
               {activeTab === tab && (
                 <motion.div
                   layoutId="statusTabIndicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2d6a4f]"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"
                 />
               )}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
+        {/* ==========================================
+             TAB CONTENT
+             ========================================== */}
         <AnimatePresence mode="wait">
+          
+          {/* ==========================================
+               TAB 1: OVERVIEW
+               ========================================== */}
           {activeTab === "overview" && (
             <motion.div
               key="overview"
@@ -557,34 +808,34 @@ const DriverStatusTracking = () => {
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
               {/* Profile Completion */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50">
-                <h3 className="text-sm font-medium text-[#4a6a5a] mb-4">Profile Completion</h3>
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 className="text-sm font-medium text-gray-500 mb-4">Profile Completion</h3>
                 <div className="relative">
-                  <div className="w-full h-3 bg-[#e8f5ee] rounded-full overflow-hidden">
+                  <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${profileData.completion}%` }}
                       transition={{ duration: 1 }}
                       className={`h-full rounded-full ${
-                        profileData.completion === 100 ? 'bg-green-500' : 'bg-gradient-to-r from-[#2d6a4f] to-[#409f7a]'
+                        profileData.completion === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-emerald-500 to-teal-400'
                       }`}
                     />
                   </div>
-                  <div className="flex justify-between mt-2 text-xs text-[#8aa89a]">
+                  <div className="flex justify-between mt-2 text-xs text-gray-400">
                     <span>0%</span>
-                    <span className="font-medium text-[#2d6a4f]">{profileData.completion}% Complete</span>
+                    <span className="font-medium text-emerald-600">{profileData.completion}% Complete</span>
                     <span>100%</span>
                   </div>
                 </div>
-                <p className="text-sm text-[#4a6a5a] mt-4">
+                <p className="text-sm text-gray-500 mt-4 flex items-center gap-2">
                   {profileData.completion < 100 ? (
                     <>
-                      <AlertCircle className="w-4 h-4 inline mr-1 text-yellow-500" />
+                      <AlertCircle className="w-4 h-4 text-yellow-500" />
                       Complete your profile to improve matching chances
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="w-4 h-4 inline mr-1 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
                       Profile is complete and ready for review
                     </>
                   )}
@@ -592,31 +843,31 @@ const DriverStatusTracking = () => {
               </div>
 
               {/* Quick Stats */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50">
-                <h3 className="text-sm font-medium text-[#4a6a5a] mb-4">Quick Stats</h3>
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 className="text-sm font-medium text-gray-500 mb-4">Quick Stats</h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#4a6a5a]">Profile Status</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">Profile Status</span>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusBg}`}>
                       {getStatusText(profileData.status)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#4a6a5a]">Submitted On</span>
-                    <span className="text-sm text-[#1a2a3a] font-medium">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">Submitted On</span>
+                    <span className="text-sm text-gray-800 font-medium">
                       {formatDate(profileData.submittedAt)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#4a6a5a]">Last Updated</span>
-                    <span className="text-sm text-[#1a2a3a] font-medium">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">Last Updated</span>
+                    <span className="text-sm text-gray-800 font-medium">
                       {formatDate(profileData.lastUpdated)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#4a6a5a]">Documents</span>
-                    <span className="text-sm text-[#1a2a3a] font-medium">
-                      {Object.values(profileData.documents).filter(d => d.uploaded).length}/3 Uploaded
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-gray-500">Documents</span>
+                    <span className="text-sm text-gray-800 font-medium">
+                      {uploadedDocs}/{totalDocs} Uploaded
                     </span>
                   </div>
                 </div>
@@ -624,6 +875,13 @@ const DriverStatusTracking = () => {
             </motion.div>
           )}
 
+          {/* ==========================================
+               TAB 2: HISTORY
+               ==========================================
+               ✅ Shows status history timeline
+               📌 BACKEND INTEGRATION: data come from backend
+               Endpoint: GET /api/drivers/profile/me/
+               ========================================== */}
           {activeTab === "history" && (
             <motion.div
               key="history"
@@ -631,11 +889,11 @@ const DriverStatusTracking = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50"
+              className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
             >
-              <h3 className="text-sm font-medium text-[#4a6a5a] mb-4 flex items-center gap-2">
-                <History className="w-4 h-4" />
-                Status History
+              <h3 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
+                <History className="w-4 h-4 text-emerald-600" />
+                Status History Timeline
               </h3>
               <div className="space-y-4">
                 {profileData.statusHistory.map((event, index) => {
@@ -645,7 +903,7 @@ const DriverStatusTracking = () => {
                     submitted: 'bg-blue-100 text-blue-600 border-blue-200',
                     in_review: 'bg-yellow-100 text-yellow-600 border-yellow-200',
                     pending: 'bg-yellow-100 text-yellow-600 border-yellow-200',
-                    approved: 'bg-green-100 text-green-600 border-green-200',
+                    approved: 'bg-emerald-100 text-emerald-600 border-emerald-200',
                     rejected: 'bg-red-100 text-red-600 border-red-200'
                   };
                   const colorClass = statusColors[event.status] || 'bg-gray-100 text-gray-600 border-gray-200';
@@ -653,21 +911,21 @@ const DriverStatusTracking = () => {
                   return (
                     <div key={event.id} className="relative pl-8">
                       {!isLast && (
-                        <div className="absolute left-3 top-6 bottom-0 w-0.5 bg-[#dce8e2]" />
+                        <div className="absolute left-3 top-6 bottom-0 w-0.5 bg-gray-200" />
                       )}
                       <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-2 ${colorClass} flex items-center justify-center`}>
                         <Icon className="w-3 h-3" />
                       </div>
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div>
-                          <p className="text-sm font-medium text-[#1a2a3a]">
+                          <p className="text-sm font-medium text-gray-800">
                             {event.label}
                           </p>
-                          <p className="text-xs text-[#8aa89a]">
+                          <p className="text-xs text-gray-400">
                             {event.description}
                           </p>
                         </div>
-                        <span className="text-xs text-[#8aa89a] flex items-center gap-1">
+                        <span className="text-xs text-gray-400 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-full">
                           <Calendar className="w-3 h-3" />
                           {formatDate(event.timestamp)}
                         </span>
@@ -679,6 +937,15 @@ const DriverStatusTracking = () => {
             </motion.div>
           )}
 
+          {/* ==========================================
+               TAB 3: DOCUMENTS
+               ==========================================
+               ✅ Shows all uploaded documents with status
+               📌 BACKEND INTEGRATION: 
+               - Document upload: POST /api/drivers/documents/
+               - Document verification: Admin approves/rejects
+               - Admin endpoint: POST /api/drivers/moderation/{id}/
+               ========================================== */}
           {activeTab === "documents" && (
             <motion.div
               key="documents"
@@ -686,21 +953,34 @@ const DriverStatusTracking = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50"
+              className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
             >
-              <h3 className="text-sm font-medium text-[#4a6a5a] mb-4 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-emerald-600" />
                 Document Status
+                <span className="text-sm font-normal text-gray-400 ml-2">
+                  ({uploadedDocs}/{totalDocs} uploaded)
+                </span>
               </h3>
+              
               <div className="grid gap-3">
                 {Object.entries(profileData.documents).map(([key, value]) => {
-                  const label = key.charAt(0).toUpperCase() + key.slice(1);
+                  const docInfo = docLabels[key];
+                  if (!docInfo) return null;
+                  const Icon = docInfo.icon;
+                  const label = docInfo.label;
+                  
                   return (
-                    <div key={key} className="flex items-center justify-between p-4 bg-[#f8fbf9] rounded-xl border border-[#e8f5ee] hover:border-[#2d6a4f] transition-all">
+                    <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-200 transition-all">
                       <div className="flex items-center gap-3">
+                        {/* Status Icons:
+                            - Green Check: Uploaded & Verified
+                            - Yellow Clock: Uploaded, Pending Verification
+                            - Red X: Not Uploaded
+                        */}
                         {value.uploaded ? (
                           value.verified ? (
-                            <CheckCircle className="w-5 h-5 text-green-500" />
+                            <CheckCircle className="w-5 h-5 text-emerald-500" />
                           ) : (
                             <Clock className="w-5 h-5 text-yellow-500" />
                           )
@@ -708,22 +988,27 @@ const DriverStatusTracking = () => {
                           <XCircle className="w-5 h-5 text-red-400" />
                         )}
                         <div>
-                          <p className="text-sm font-medium text-[#1a2a3a]">{label}</p>
-                          <p className="text-xs text-[#8aa89a]">
+                          <p className="text-sm font-medium text-gray-800">{label}</p>
+                          <p className="text-xs text-gray-400">
                             {value.uploaded ? `Uploaded ${value.name ? `- ${value.name}` : ''}` : 'Not Uploaded'} 
-                            {value.verified && ' ✅ Verified'}
+                            {value.verified && ' Verified'}
                           </p>
                         </div>
                       </div>
-                      {value.uploaded && (
-                        <button 
-                          onClick={() => handleViewDocument(key)}
-                          className="text-xs text-[#2d6a4f] hover:underline flex items-center gap-1 px-3 py-1.5 bg-white rounded-lg border border-[#e8f5ee] hover:border-[#2d6a4f] transition-all"
-                        >
-                          <Eye className="w-3 h-3" />
-                          View
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {value.uploaded && (
+                          <button 
+                            onClick={() => handleViewDocument(key)}
+                            className="text-xs text-emerald-600 hover:underline flex items-center gap-1 px-3 py-1.5 bg-white rounded-lg border border-gray-200 hover:border-emerald-200 transition-all"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View
+                          </button>
+                        )}
+                        {!value.uploaded && (
+                          <span className="text-xs text-gray-400 px-2 py-1 bg-gray-100 rounded-lg">Pending</span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -731,6 +1016,16 @@ const DriverStatusTracking = () => {
             </motion.div>
           )}
 
+          {/* ==========================================
+               TAB 4: OPPORTUNITIES
+               ==========================================
+               ✅ only show if profile is approved
+               📌 BACKEND INTEGRATION:
+               - after profile approval, fetch available jobs from backend
+               - Admin Approval: POST /api/drivers/moderation/{id}/
+               - Opportunities fetch: GET /api/drivers/opportunities/
+               - Apply: POST /api/drivers/jobs/{jobId}/apply/
+               ========================================== */}
           {activeTab === "opportunities" && (
             <motion.div
               key="opportunities"
@@ -740,31 +1035,34 @@ const DriverStatusTracking = () => {
               transition={{ duration: 0.2 }}
             >
               {isApproved ? (
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50">
+                // ✅ PROFILE APPROVED - Show Opportunities
+                <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                    <h3 className="text-lg font-semibold text-[#1a2a3a] flex items-center gap-2">
-                      <Briefcase className="w-5 h-5 text-[#2d6a4f]" />
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <Briefcase className="w-5 h-5 text-emerald-600" />
                       Available Opportunities
                     </h3>
-                    <span className="text-sm text-[#8aa89a]">{filteredOpportunities.length} jobs found</span>
+                    <span className="text-sm text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
+                      {filteredOpportunities.length} jobs found
+                    </span>
                   </div>
 
                   {/* Search and Filter */}
                   <div className="flex flex-col sm:flex-row gap-3 mb-6">
                     <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8aa89a]" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="text"
                         placeholder="Search by job title or company"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border-2 border-[#dce8e2] rounded-xl focus:border-[#2d6a4f] focus:ring-2 focus:ring-[#2d6a4f]/20 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                       />
                     </div>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-4 py-2.5 border-2 border-[#dce8e2] rounded-xl focus:border-[#2d6a4f] outline-none transition-all bg-white"
+                      className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-emerald-500 outline-none transition-all bg-white"
                     >
                       <option value="all">All Jobs</option>
                       <option value="open">Open</option>
@@ -780,39 +1078,39 @@ const DriverStatusTracking = () => {
                           key={job.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-5 bg-[#f8fbf9] rounded-xl border border-[#e8f5ee] hover:border-[#2d6a4f] hover:shadow-md transition-all"
+                          className="p-5 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all"
                         >
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                             <div className="flex-1">
-                              <h4 className="text-lg font-semibold text-[#1a2a3a]">{job.title}</h4>
-                              <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-[#4a6a5a]">
+                              <h4 className="text-lg font-semibold text-gray-800">{job.title}</h4>
+                              <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500">
                                 <span className="flex items-center gap-1">
                                   <Briefcase className="w-3.5 h-3.5" />
                                   {job.company}
                                 </span>
-                                <span className="w-1 h-1 rounded-full bg-[#dce8e2]" />
+                                <span className="w-1 h-1 rounded-full bg-gray-300" />
                                 <span className="flex items-center gap-1">
                                   <MapPin className="w-3.5 h-3.5" />
                                   {job.location}
                                 </span>
-                                <span className="w-1 h-1 rounded-full bg-[#dce8e2]" />
-                                <span className="flex items-center gap-1 text-[#2d6a4f] font-medium">
+                                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                <span className="flex items-center gap-1 text-emerald-600 font-medium">
                                   <DollarSign className="w-3.5 h-3.5" />
                                   {job.salary}
                                 </span>
                               </div>
                               <div className="flex flex-wrap items-center gap-3 mt-2">
-                                <span className="text-xs px-2.5 py-1 bg-[#e8f5ee] text-[#2d6a4f] rounded-full">
+                                <span className="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full">
                                   {job.type}
                                 </span>
-                                <span className="text-xs text-[#8aa89a]">
+                                <span className="text-xs text-gray-400">
                                   Posted {job.posted}
                                 </span>
                               </div>
                             </div>
                             <button
                               onClick={() => handleApplyJob(job.id)}
-                              className="px-5 py-2.5 bg-[#2d6a4f] text-white rounded-xl font-medium hover:bg-[#1a4a35] transition-all shadow-md hover:shadow-lg flex items-center gap-2 whitespace-nowrap"
+                              className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 whitespace-nowrap"
                             >
                               <ThumbsUp className="w-4 h-4" />
                               Apply Now
@@ -821,23 +1119,24 @@ const DriverStatusTracking = () => {
                         </motion.div>
                       ))
                     ) : (
-                      <div className="text-center py-8 text-[#8aa89a]">
-                        <Search className="w-12 h-12 mx-auto mb-3 text-[#dce8e2]" />
+                      <div className="text-center py-8 text-gray-400">
+                        <Search className="w-12 h-12 mx-auto mb-3 text-gray-200" />
                         <p>No jobs found matching your criteria</p>
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8 border border-white/50 text-center">
-                  <div className="w-20 h-20 bg-[#e8f5ee] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="w-10 h-10 text-[#2d6a4f]" />
+                // ❌ PROFILE NOT APPROVED - Show Under Review Message
+                <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Clock className="w-10 h-10 text-emerald-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-[#1a2a3a] mb-2">Profile Under Review</h3>
-                  <p className="text-[#4a6a5a] max-w-md mx-auto">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Profile Under Review</h3>
+                  <p className="text-gray-500 max-w-md mx-auto">
                     You'll see job opportunities here once your profile is approved by the admin team.
                     <br />
-                    <span className="text-sm text-[#8aa89a] mt-2 block">
+                    <span className="text-sm text-gray-400 mt-2 block">
                       This usually takes 1-2 business days.
                     </span>
                   </p>
@@ -851,43 +1150,47 @@ const DriverStatusTracking = () => {
           )}
         </AnimatePresence>
 
-        {/* Next Steps */}
+        {/* ==========================================
+             NEXT STEPS
+             ==========================================
+             ✅ Shows 3-step process for driver
+             ========================================== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50"
+          className="mt-6 bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
         >
-          <h3 className="text-sm font-medium text-[#4a6a5a] mb-4 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-[#2d6a4f]" />
+          <h3 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
+            <Bell className="w-4 h-4 text-emerald-600" />
             What Happens Next?
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-start gap-3 p-3 bg-[#f8fbf9] rounded-xl">
-              <div className="w-8 h-8 rounded-full bg-[#e8f5ee] flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-[#2d6a4f]">1</span>
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-emerald-600">1</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1a2a3a]">Admin Review</p>
-                <p className="text-xs text-[#8aa89a]">Admin team reviews your profile and documents</p>
+                <p className="text-sm font-medium text-gray-800">Admin Review</p>
+                <p className="text-xs text-gray-400">Admin team reviews your profile and documents</p>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-[#f8fbf9] rounded-xl">
-              <div className="w-8 h-8 rounded-full bg-[#e8f5ee] flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-[#2d6a4f]">2</span>
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-emerald-600">2</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1a2a3a]">Get Notified</p>
-                <p className="text-xs text-[#8aa89a]">You'll receive notification of the decision</p>
+                <p className="text-sm font-medium text-gray-800">Get Notified</p>
+                <p className="text-xs text-gray-400">You'll receive notification of the decision</p>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-[#f8fbf9] rounded-xl">
-              <div className="w-8 h-8 rounded-full bg-[#e8f5ee] flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-[#2d6a4f]">3</span>
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-emerald-600">3</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1a2a3a]">Start Applying</p>
-                <p className="text-xs text-[#8aa89a]">Profile becomes visible to recruiters</p>
+                <p className="text-sm font-medium text-gray-800">Start Applying</p>
+                <p className="text-xs text-gray-400">Profile becomes visible to recruiters</p>
               </div>
             </div>
           </div>
@@ -896,8 +1199,5 @@ const DriverStatusTracking = () => {
     </div>
   );
 };
-
-// Import Edit icon
-import { Edit } from "lucide-react";
 
 export default DriverStatusTracking;

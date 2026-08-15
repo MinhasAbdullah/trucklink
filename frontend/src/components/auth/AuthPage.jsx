@@ -38,6 +38,7 @@ const AuthPage = () => {
     setShowSuccess(false);
   };
 
+  // ✅ FIXED: Login handler with email-specific profile check
   const handleSignIn = async (data) => {
     setIsLoading(true);
     try {
@@ -45,14 +46,17 @@ const AuthPage = () => {
       
       console.log("Sign in successful:", { ...data, role: selectedRole });
       
-      // ✅ Store login info
+      // Store login info
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('userEmail', data.email);
       localStorage.setItem('userRole', selectedRole);
       
       const role = selectedRole;
       if (role === "driver") {
-        const hasProfile = localStorage.getItem('driverProfileSubmitted');
+        // ✅ Email-specific profile check
+        const profileKey = `driverProfileSubmitted_${data.email}`;
+        const hasProfile = localStorage.getItem(profileKey);
+        
         if (hasProfile === 'true') {
           navigate("/driver/status");
         } else {
@@ -70,6 +74,7 @@ const AuthPage = () => {
     }
   };
 
+  // ✅ FIXED: Signup handler
   const handleSignUp = async (data) => {
     setIsLoading(true);
     try {
@@ -77,8 +82,13 @@ const AuthPage = () => {
       
       console.log("Driver signup successful:", { ...data });
       
+      // Store user info
       localStorage.setItem('driverEmail', data.email);
       localStorage.setItem('driverName', data.fullName);
+      
+      // ✅ Initialize profile as NOT submitted for this email
+      const profileKey = `driverProfileSubmitted_${data.email}`;
+      localStorage.setItem(profileKey, 'false');
       
       setShowSuccess(true);
       setTimeout(() => {
