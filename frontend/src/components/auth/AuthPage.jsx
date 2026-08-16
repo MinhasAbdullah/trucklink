@@ -39,40 +39,42 @@ const AuthPage = () => {
   };
 
   // ✅ FIXED: Login handler with email-specific profile check
-  const handleSignIn = async (data) => {
-    setIsLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      console.log("Sign in successful:", { ...data, role: selectedRole });
-      
-      // Store login info
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', data.email);
-      localStorage.setItem('userRole', selectedRole);
-      
-      const role = selectedRole;
-      if (role === "driver") {
-        // ✅ Email-specific profile check
-        const profileKey = `driverProfileSubmitted_${data.email}`;
-        const hasProfile = localStorage.getItem(profileKey);
-        
-        if (hasProfile === 'true') {
-          navigate("/driver/status");
-        } else {
-          navigate("/driver/profile");
-        }
-      } else if (role === "recruiter") {
-        navigate("/recruiter/dashboard");
+ const handleSignIn = async (data) => {
+  setIsLoading(true);
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    console.log("Sign in successful:", { ...data, role: selectedRole });
+    
+    // Store login info
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userEmail', data.email);
+    localStorage.setItem('userRole', selectedRole);
+    
+    const role = selectedRole;
+    
+    // ✅ Redirect based on role
+    if (role === "driver") {
+      const hasProfile = localStorage.getItem('driverProfileSubmitted');
+      if (hasProfile === 'true') {
+        navigate("/driver/status");
       } else {
-        navigate("/admin/dashboard");
+        navigate("/driver/profile");
       }
-    } catch (error) {
-      throw new Error("Invalid credentials. Please try again.");
-    } finally {
-      setIsLoading(false);
+    } else if (role === "recruiter") {
+      navigate("/recruiter/dashboard");
+    } else if (role === "admin") {
+      // ✅ Admin login - redirect to admin dashboard
+      navigate("/admin/analytics");
+    } else {
+      navigate("/");
     }
-  };
+  } catch (error) {
+    throw new Error("Invalid credentials. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // ✅ FIXED: Signup handler
   const handleSignUp = async (data) => {

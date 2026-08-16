@@ -227,93 +227,96 @@ const DriverProfileForm = () => {
   const totalDocuments = Object.keys(uploadedFiles).length;
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    const requiredFields = [
-      'fullName', 'dateOfBirth', 'currentCity', 'stateRegion', 
-      'phoneNumber', 'email', 'cdlClass', 'licenseNumber', 
-      'licenseExpiry', 'totalExperience', 'preferredRouteType',
-      'equipmentTypes', 'availableFrom'
-    ];
-    
-    const missingFields = requiredFields.filter(field => {
-      if (Array.isArray(formData[field])) {
-        return formData[field].length === 0;
-      }
-      return !formData[field];
-    });
-    
-    if (missingFields.length > 0) {
-      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
-      return;
+  e.preventDefault();
+  
+  // Validate required fields
+  const requiredFields = [
+    'fullName', 'dateOfBirth', 'currentCity', 'stateRegion', 
+    'phoneNumber', 'email', 'cdlClass', 'licenseNumber', 
+    'licenseExpiry', 'totalExperience', 'preferredRouteType',
+    'equipmentTypes', 'availableFrom'
+  ];
+  
+  const missingFields = requiredFields.filter(field => {
+    if (Array.isArray(formData[field])) {
+      return formData[field].length === 0;
     }
+    return !formData[field];
+  });
+  
+  if (missingFields.length > 0) {
+    alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+    return;
+  }
+  
+  const dob = new Date(formData.dateOfBirth);
+  const today = new Date();
+  const age = today.getFullYear() - dob.getFullYear();
+  if (age < 21) {
+    alert("You must be at least 21 years old");
+    return;
+  }
+  
+  const expiry = new Date(formData.licenseExpiry);
+  if (expiry <= today) {
+    alert("License expiry date must be in the future");
+    return;
+  }
+  
+  const availableDate = new Date(formData.availableFrom);
+  if (availableDate < today) {
+    alert("Available to start date must be today or in the future");
+    return;
+  }
+  
+  const requiredDocs = ['license', 'medical', 'cnic'];
+  const missingDocs = requiredDocs.filter(doc => !uploadedFiles[doc]);
+  
+  if (missingDocs.length > 0) {
+    alert(`Please upload required documents: Driver License, Medical Card, and CNIC`);
+    return;
+  }
+  
+  setIsLoading(true);
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const dob = new Date(formData.dateOfBirth);
-    const today = new Date();
-    const age = today.getFullYear() - dob.getFullYear();
-    if (age < 21) {
-      alert("You must be at least 21 years old");
-      return;
-    }
+    // ✅ ADD THIS LINE - Current date for tracking
+    const currentDate = new Date().toISOString();
     
-    const expiry = new Date(formData.licenseExpiry);
-    if (expiry <= today) {
-      alert("License expiry date must be in the future");
-      return;
-    }
+    const profileKey = `driverProfileSubmitted_${formData.email}`;
+    localStorage.setItem(profileKey, 'true');
     
-    const availableDate = new Date(formData.availableFrom);
-    if (availableDate < today) {
-      alert("Available to start date must be today or in the future");
-      return;
-    }
-    
-    const requiredDocs = ['license', 'medical', 'cnic'];
-    const missingDocs = requiredDocs.filter(doc => !uploadedFiles[doc]);
-    
-    if (missingDocs.length > 0) {
-      alert(`Please upload required documents: Driver License, Medical Card, and CNIC`);
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const profileKey = `driverProfileSubmitted_${formData.email}`;
-      localStorage.setItem(profileKey, 'true');
-      
-      localStorage.setItem('driverName', formData.fullName);
-      localStorage.setItem('driverProfileSubmittedDate', currentDate);
-      localStorage.setItem('driverEmail', formData.email);
-      localStorage.setItem('driverPhone', formData.phoneNumber);
-      localStorage.setItem('driverCity', formData.currentCity);
-      localStorage.setItem('driverRegion', formData.stateRegion);
-      localStorage.setItem('driverCDL', formData.cdlClass);
-      localStorage.setItem('driverLicenseNumber', formData.licenseNumber);
-      localStorage.setItem('driverLicenseExpiry', formData.licenseExpiry);
-      localStorage.setItem('driverEndorsements', formData.endorsements.join(', '));
-      localStorage.setItem('driverExperience', formData.totalExperience);
-      localStorage.setItem('driverRoute', formData.preferredRouteType);
-      localStorage.setItem('driverEquipment', formData.equipmentTypes.join(', '));
-      localStorage.setItem('driverAvailableFrom', formData.availableFrom);
-      localStorage.setItem('driverSchedule', formData.preferredSchedule || 'Not Specified');
+    localStorage.setItem('driverName', formData.fullName);
+    localStorage.setItem('driverProfileSubmittedDate', currentDate);
+    localStorage.setItem('driverEmail', formData.email);
+    localStorage.setItem('driverPhone', formData.phoneNumber);
+    localStorage.setItem('driverCity', formData.currentCity);
+    localStorage.setItem('driverRegion', formData.stateRegion);
+    localStorage.setItem('driverCDL', formData.cdlClass);
+    localStorage.setItem('driverLicenseNumber', formData.licenseNumber);
+    localStorage.setItem('driverLicenseExpiry', formData.licenseExpiry);
+    localStorage.setItem('driverEndorsements', formData.endorsements.join(', '));
+    localStorage.setItem('driverExperience', formData.totalExperience);
+    localStorage.setItem('driverRoute', formData.preferredRouteType);
+    localStorage.setItem('driverEquipment', formData.equipmentTypes.join(', '));
+    localStorage.setItem('driverAvailableFrom', formData.availableFrom);
+    localStorage.setItem('driverSchedule', formData.preferredSchedule || 'Not Specified');
 
-      console.log("Profile submitted:", { ...formData, documents: uploadedFiles });
-      
-      setSuccess(true);
-      setTimeout(() => {
-        navigate("/driver/status");
-      }, 1500);
-      
-    } catch (error) {
-      console.error("Error submitting profile:", error);
-      alert("Failed to submit profile. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    console.log("✅ Profile submitted successfully!");
+    
+    setSuccess(true);
+    setTimeout(() => {
+      navigate("/driver/status");
+    }, 1500);
+    
+  } catch (error) {
+    console.error("❌ Error submitting profile:", error);
+    alert("Failed to submit profile. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const steps = [
     { id: 1, label: "Personal Info", icon: User },
