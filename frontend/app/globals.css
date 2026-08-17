@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  --color-cream: #faf6ef;
+  --color-cream-soft: #f2ebdd;
+  --color-card: #f7f1e6;
+  --color-border-tan: #e6dcc6;
+
+  --color-forest: #1f4d36;
+  --color-forest-dark: #123322;
+  --color-forest-deep: #16281f;
+  --color-sage: #4a7c63;
+
+  --color-orange: #cf5f16;
+  --color-orange-dark: #b3500f;
+
+  --color-ink: #201d16;
+  --color-ink-soft: #4b453a;
+  --color-ink-faint: #8a8272;
+
+  --color-success-bg: #dfeee2;
+  --color-success-text: #1f5c3d;
+  --color-warning-bg: #fbe9d2;
+  --color-warning-text: #a4590d;
+}
+
+@theme inline {
+  --color-background: var(--color-cream);
+  --color-foreground: var(--color-ink);
+
+  --color-cream: var(--color-cream);
+  --color-cream-soft: var(--color-cream-soft);
+  --color-card: var(--color-card);
+  --color-border-tan: var(--color-border-tan);
+
+  --color-forest: var(--color-forest);
+  --color-forest-dark: var(--color-forest-dark);
+  --color-forest-deep: var(--color-forest-deep);
+  --color-sage: var(--color-sage);
+
+  --color-orange: var(--color-orange);
+  --color-orange-dark: var(--color-orange-dark);
+
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-ink-faint: var(--color-ink-faint);
+
+  --color-success-bg: var(--color-success-bg);
+  --color-success-text: var(--color-success-text);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-warning-text: var(--color-warning-text);
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}

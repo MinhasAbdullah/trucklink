@@ -1,0 +1,6 @@
+{
+  "/driver-matching/page": "app/driver-matching/page.js",
+  "/page": "app/page.js",
+  "/post-job/page": "app/post-job/page.js",
+  "/recruiter-dashboard/page": "app/recruiter-dashboard/page.js"
+}
