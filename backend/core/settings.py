@@ -36,12 +36,19 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Must be first for Channels ASGI support
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 3rd party packages
+    'rest_framework',
+    'corsheaders',
+    'channels',
+    # Local app
+    'trucklink_api.apps.TrucklinkApiConfig',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -55,6 +62,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware at top
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -64,6 +72,30 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# ASGI & Channels Config
+ASGI_APPLICATION = 'core.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
+# Cloudinary Settings
+import os
+from dotenv import load_dotenv
+load_dotenv(BASE_DIR / '.env')
+
+CLOUDINARY_CONFIG = {
+    'cloud_name': os.getenv('CLOUDINARY_CLOUD_NAME', 'moq6ftoa'),
+    'api_key': os.getenv('CLOUDINARY_API_KEY', '162968762632131'),
+    'api_secret': os.getenv('CLOUDINARY_API_SECRET', 'X-5TbCNA6CcF-SAZeXhFwfbkNbM'),
+}
 
 ROOT_URLCONF = 'core.urls'
 

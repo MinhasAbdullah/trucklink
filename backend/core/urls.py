@@ -26,5 +26,7 @@ urlpatterns = [
     path('api/drivers/', include('drivers.urls')),
     path('api/recruiters/', include('recruiters.urls')),
     path('api/analytics/', include('analytics.urls')),
+    path('api/', include('trucklink_api.urls')),
 
 ]
+
