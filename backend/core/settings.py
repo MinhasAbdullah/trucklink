@@ -49,9 +49,7 @@ INSTALLED_APPS = [
     'channels',
     # Local app
     'trucklink_api.apps.TrucklinkApiConfig',
-    'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',
     # 'cloudinary_storage',
     # 'django.contrib.staticfiles',
     #apps
