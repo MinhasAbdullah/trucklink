@@ -7,7 +7,7 @@ const SignUp = ({ onSignUp, isLoading, selectedRole, onSwitchToSignIn }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  if (selectedRole === "admin") return <div className="py-8 text-center"><div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#2d6a4f]"><Shield className="h-9 w-9 text-white"/></div><h3 className="text-xl font-semibold text-[#1a2a3a]">Admin access</h3><p className="mx-auto mt-2 max-w-xs text-sm text-[#4a6a5a]">Admin accounts are created in the backend. Please log in with an existing admin account.</p><button type="button" onClick={onSwitchToSignIn} className="mt-5 text-sm font-semibold text-[#2d6a4f] hover:underline">Back to login</button></div>;
+  if (selectedRole === "admin") return <div className="py-8 text-center"><div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#2d6a4f]"><Shield className="h-9 w-9 text-white"/></div><h3 className="text-xl font-semibold text-[#1a2a3a]">Admin access</h3><p className="mx-auto mt-2 max-w-xs text-sm text-[#4a6a5a]">Admin registration is managed by your organization. Please sign in with your assigned admin account.</p><button type="button" onClick={onSwitchToSignIn} className="mt-5 text-sm font-semibold text-[#2d6a4f] hover:underline">Back to login</button></div>;
 
   const handleChange = (e) => { const {name,value,type,checked}=e.target; setFormData((p)=>({...p,[name]:type==="checkbox"?checked:value})); setError(""); };
   const handleSubmit = async (e) => {

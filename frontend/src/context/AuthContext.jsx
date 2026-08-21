@@ -48,13 +48,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       if (role === "driver") {
-        try {
-          await driverApi.getMyProfile();
-        } catch (error) {
-          // The backend currently throws 500 when a valid driver has no profile.
-          // 403 is the meaningful signal that the selected role is wrong.
-          if (error.response?.status === 403) throw error;
-        }
+        await driverApi.checkAccess();
       }
     } catch (error) {
       if (error.response?.status === 403) {

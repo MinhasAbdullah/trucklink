@@ -77,18 +77,31 @@ api.interceptors.response.use(
   }
 );
 
-export const getApiErrorMessage = (error, fallback = "Something went wrong.") => {
+export const getApiErrorMessage = (error, fallback = "Something went wrong. Please try again.") => {
+  const status = error?.response?.status;
   const data = error?.response?.data;
-  if (!data) return error?.message || fallback;
-  if (typeof data === "string") return data;
-  if (data.detail) return data.detail;
-  if (data.error) return data.error;
 
-  const firstField = Object.keys(data)[0];
-  if (firstField) {
-    const value = data[firstField];
-    const message = Array.isArray(value) ? value[0] : value;
-    return `${firstField}: ${message}`;
+  if (!error?.response) {
+    return "Unable to connect right now. Check your connection and try again.";
+  }
+  if (status >= 500) return "We’re having trouble completing your request. Please try again.";
+  if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 403) return "You don’t have permission to perform this action.";
+  if (status === 404 && (!data || typeof data === "string")) return fallback;
+
+  if (data && typeof data === "object") {
+    if (typeof data.detail === "string" && data.detail.length < 180) return data.detail;
+    if (typeof data.error === "string" && data.error.length < 180) return data.error;
+
+    const firstField = Object.keys(data)[0];
+    if (firstField) {
+      const value = data[firstField];
+      const message = Array.isArray(value) ? value[0] : value;
+      if (typeof message === "string" && message.length < 180) {
+        const label = firstField.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+        return `${label}: ${message}`;
+      }
+    }
   }
 
   return fallback;

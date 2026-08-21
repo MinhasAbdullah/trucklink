@@ -21,11 +21,7 @@ export const AdminModerationProvider = ({ children }) => {
       setDrivers(Array.isArray(data) ? data : []);
     } catch (err) {
       setDrivers([]);
-      const status = err?.response?.status;
-      const message = status === 500
-        ? "The moderation queue endpoint returned 500. The backend queue queryset needs to be fixed before pending drivers can load."
-        : getApiErrorMessage(err, "Unable to load the moderation queue.");
-      setError(message);
+      setError(getApiErrorMessage(err, "Unable to load the moderation queue."));
     } finally {
       setLoading(false);
     }

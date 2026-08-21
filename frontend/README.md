@@ -1,8 +1,8 @@
 # TruckLink Frontend
 
-React + TailwindCSS frontend connected to the supplied Django REST API with Axios and JWT authentication.
+Production-oriented React + TailwindCSS frontend aligned to the supplied `backend(2).zip` API surface. The backend is not modified by this package.
 
-## Run
+## Run locally
 
 ```bash
 npm install
@@ -10,80 +10,59 @@ cp .env.example .env
 npm run dev
 ```
 
-The Vite dev server proxies `/api` to `http://127.0.0.1:8000` by default. Change `VITE_BACKEND_URL` if Django runs elsewhere.
+By default Vite proxies `/api` and `/ws` to `VITE_BACKEND_URL`.
 
-## Public routes
+## Production environment
 
-- `/` — new TruckLink landing page
-- `/roles` — driver / recruiter / admin role selection
-- `/auth?role=driver|recruiter|admin` — role-aware authentication
+When frontend and backend are deployed on different domains, set:
 
-## Protected routes
+```env
+VITE_API_BASE_URL=https://YOUR-BACKEND-DOMAIN/api
+VITE_BACKEND_URL=https://YOUR-BACKEND-DOMAIN
+VITE_WS_URL=wss://YOUR-BACKEND-DOMAIN/ws/realtime/
+```
 
-- Driver: `/driver`, `/driver/profile`, `/driver/status`
-- Recruiter: `/recruiter/dashboard`
-- Admin: `/admin/dashboard`, `/admin/moderation`, `/admin/analytics`, `/admin/recruiters`, `/admin/master-data`
+`VITE_WS_URL` is optional when it can be derived from `VITE_BACKEND_URL`.
 
-## API integration
+## Routes
 
-Axios is configured in `src/api/client.js`. It attaches the JWT access token and attempts token refresh automatically on `401`.
-
-### Authentication
-
-- `POST /api/token/`
-- `POST /api/token/refresh/`
-- `POST /api/users/signup/driver/`
-- `POST /api/users/signup/recruiter/`
-
-The Django backend authenticates with `username` + `password`, so the login form uses username rather than email.
+### Public
+- `/` — landing page
+- `/roles` — role selection
+- `/auth?role=driver|recruiter|admin` — authentication
 
 ### Driver
-
-- `POST /api/drivers/profile/`
-- `GET /api/drivers/profile/me/`
-- `PATCH /api/drivers/profile/me/`
+- `/driver` — profile/status redirect
+- `/driver/profile` — create or edit driver profile
+- `/driver/status` — moderation status and profile summary
+- `/driver/trucks` — truck management, image/license upload, matching
+- `/driver/matches` — freight matches
 
 ### Recruiter
-
-- `POST /api/recruiters/profile/`
-- `GET /api/recruiters/profile/me/`
-- `GET /api/recruiters/jobs/mine/`
-- `POST /api/recruiters/jobs/`
+- `/recruiter/dashboard` — recruiter profile and job postings
+- `/recruiter/loads` — load management, image/document upload, matching
+- `/recruiter/matches` — freight matches
 
 ### Admin
+- `/admin/dashboard` — platform overview
+- `/admin/moderation` — driver moderation
+- `/admin/analytics` — platform analytics
+- `/admin/recruiters` — recruiter account management
+- `/admin/operations` — loads, trucks, matches, statistics, and live activity
 
-- `GET /api/drivers/moderation/queue/`
-- `POST /api/drivers/moderation/:id/`
-- `GET /api/analytics/`
-- `GET /api/recruiters/admin/list/`
-- `POST /api/recruiters/admin/:id/status/`
+## Uploads
 
-## Admin console
+The supplied backend's shared upload service is used by the freight forms. Uploaded URLs are persisted in fields already exposed by the backend:
 
-The revised frontend styling has been merged into the final API-connected project. Admin users share a responsive butter/green shell with a persistent desktop sidebar and a mobile drawer:
+- Load image
+- Load document
+- Truck image
+- Truck license document
 
-- `/admin/dashboard` — live overview of moderation, recruiter, and analytics activity
-- `/admin/moderation` — pending driver moderation queue with approve/reject/request-changes actions
-- `/admin/analytics` — live backend analytics only; mock trends/recent activity removed
-- `/admin/recruiters` — real recruiter accounts and active/pending/suspended status controls
-- `/admin/master-data` — retained master-data UI shell without fabricated rows because the backend does not expose CRUD endpoints yet
+## Compatibility notes
 
-All `/admin/*` pages are nested below `ProtectedRoute` + `AdminRoute` and the shared `AdminShell`. Authentication uses `AuthContext`; moderation and recruiter admin state use `AdminModerationContext` and `AdminRecruitersContext`.
+The frontend only calls routes present in `backend(2).zip`. It does not require master-data CRUD routes or separate DriverDocument CRUD routes.
 
-## Backend limitations discovered
+The backend's driver profile serializer accepts endorsement, equipment, and region relationships but does not provide lookup endpoints for their display values. The production UI therefore does not ask users to enter raw database IDs.
 
-The supplied backend currently has this moderation queue queryset:
-
-```py
-DriverProfile.objects.filter(DriverProfile.Status.PENDING)
-```
-
-It should be:
-
-```py
-DriverProfile.objects.filter(status=DriverProfile.Status.PENDING)
-```
-
-Until that backend line is corrected, the frontend will show a queue API error instead of inventing moderation data.
-
-The supplied backend also has no API endpoints for driver documents or Region/EndorsementType/EquipmentType lookup/CRUD data. The frontend therefore does not treat mock document/master-data records as real API data.
+The moderation queue route exists in the supplied backend. If that route returns a server error, the frontend presents a normal retry state rather than exposing implementation details.

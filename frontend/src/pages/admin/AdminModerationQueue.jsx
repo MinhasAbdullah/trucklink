@@ -103,7 +103,7 @@ const AdminModerationQueue = () => {
       >
         {error && (
           <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <p className="font-bold">Queue API error</p>
+            <p className="font-bold">Unable to load the queue</p>
             <p className="mt-1">{error}</p>
           </div>
         )}
@@ -115,7 +115,7 @@ const AdminModerationQueue = () => {
           <EmptyState
             icon={ShieldCheck}
             title="No pending drivers"
-            description={error ? "Fix the API error above and refresh." : "Every submitted profile has been reviewed."}
+            description={error ? "Please try refreshing the page." : "Every submitted profile has been reviewed."}
           />
         )}
       </AdminSectionCard>

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
-  Database,
   FileText,
+  RadioTower,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -41,10 +41,10 @@ const menuItems = [
     description: "Manage accounts",
   },
   {
-    path: "/admin/master-data",
-    icon: Database,
-    label: "Master Data",
-    description: "Endorsements & regions",
+    path: "/admin/operations",
+    icon: RadioTower,
+    label: "Freight Operations",
+    description: "Loads, trucks & matches",
   },
 ];
 

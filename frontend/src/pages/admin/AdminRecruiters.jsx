@@ -70,7 +70,7 @@ const AdminRecruiters = () => {
           <h1 className="flex items-center gap-2 text-2xl font-bold text-[#1a2a3a]">
             <Users className="h-6 w-6 text-[#2d6a4f]" /> Recruiter Accounts
           </h1>
-          <p className="text-sm text-[#8aa89a]">Approve, monitor, or suspend recruiter profiles using the admin API</p>
+          <p className="text-sm text-[#8aa89a]">Approve, monitor, or suspend recruiter accounts.</p>
         </div>
         <button
           type="button"
@@ -119,7 +119,7 @@ const AdminRecruiters = () => {
             type="search"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search company, phone, or user ID..."
+            placeholder="Search company or phone..."
             className="w-full rounded-xl border-2 border-[#e8f5ee] bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#2d6a4f] focus:ring-2 focus:ring-[#2d6a4f]/15"
           />
         </div>
@@ -169,7 +169,7 @@ const AdminRecruiters = () => {
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f5ee] text-[#2d6a4f]"><Building2 className="h-5 w-5" /></div>
                             <div>
                               <p className="font-semibold text-[#1a2a3a]">{recruiter.company_name || `Recruiter #${recruiter.id}`}</p>
-                              <p className="text-xs text-[#8aa89a]">User ID {recruiter.user ?? "—"}</p>
+                              <p className="text-xs text-[#8aa89a]">Recruiter account</p>
                             </div>
                           </div>
                         </td>
@@ -224,7 +224,7 @@ const AdminRecruiters = () => {
                     <td colSpan="5" className="px-6 py-14 text-center">
                       <Shield className="mx-auto h-10 w-10 text-[#c8d8cf]" />
                       <p className="mt-3 font-medium text-[#4a6a5a]">No recruiter accounts match this view.</p>
-                      <p className="mt-1 text-sm text-[#8aa89a]">The table only shows records returned by the backend.</p>
+                      <p className="mt-1 text-sm text-[#8aa89a]">Try a different search or status filter.</p>
                     </td>
                   </tr>
                 )}

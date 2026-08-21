@@ -15,24 +15,20 @@ import { Link } from "react-router-dom";
 import { useAdminModeration } from "../../context/AdminModerationContext";
 import { useAdminRecruiters } from "../../context/AdminRecruitersContext";
 import LoadingState from "../../components/ui/LoadingState";
-import StatusBadge from "../../components/ui/StatusBadge";
 
 const AdminDashboard = () => {
   const {
-    drivers,
     analytics,
-    loading,
     analyticsLoading,
-    error,
     analyticsError,
-    loadDashboard,
+    loadAnalytics,
   } = useAdminModeration();
   const { recruiters, loading: recruitersLoading, error: recruitersError, loadRecruiters } = useAdminRecruiters();
 
   useEffect(() => {
-    loadDashboard();
+    loadAnalytics();
     loadRecruiters();
-  }, [loadDashboard, loadRecruiters]);
+  }, [loadAnalytics, loadRecruiters]);
 
   const activeRecruiters = useMemo(
     () => recruiters.filter((item) => item.status === "active").length,
@@ -43,6 +39,7 @@ const AdminDashboard = () => {
     [recruiters]
   );
 
+  const pendingDrivers = analytics?.driver_status_breakdown?.pending ?? 0;
   const stats = [
     {
       icon: Truck,
@@ -53,7 +50,7 @@ const AdminDashboard = () => {
     {
       icon: FileText,
       label: "Pending Moderation",
-      value: analytics?.driver_status_breakdown?.pending,
+      value: pendingDrivers,
       description: "Profiles awaiting review",
     },
     {
@@ -70,7 +67,12 @@ const AdminDashboard = () => {
     },
   ];
 
-  const loadingEverything = (loading || analyticsLoading || recruitersLoading) && !analytics && !drivers.length && !recruiters.length;
+  const loadingEverything = (analyticsLoading || recruitersLoading) && !analytics && !recruiters.length;
+
+  const refresh = () => {
+    loadAnalytics();
+    loadRecruiters();
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -80,24 +82,21 @@ const AdminDashboard = () => {
             <ShieldCheck className="h-3.5 w-3.5" /> Admin overview
           </div>
           <h1 className="text-2xl font-bold text-[#1a2a3a]">Platform Dashboard</h1>
-          <p className="text-sm text-[#8aa89a]">Live operational snapshot across moderation, recruiters, and matching</p>
+          <p className="text-sm text-[#8aa89a]">A clear overview of drivers, recruiters, moderation, and matching.</p>
         </div>
         <button
           type="button"
-          onClick={() => {
-            loadDashboard();
-            loadRecruiters();
-          }}
+          onClick={refresh}
           className="flex items-center gap-2 rounded-xl bg-[#2d6a4f] px-4 py-2.5 text-sm font-medium text-white shadow-md transition hover:bg-[#1a4a35]"
         >
-          <RefreshCw className={`h-4 w-4 ${loading || analyticsLoading || recruitersLoading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-4 w-4 ${analyticsLoading || recruitersLoading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
 
-      {(error || analyticsError || recruitersError) && (
+      {(analyticsError || recruitersError) && (
         <div className="space-y-2">
-          {[error, analyticsError, recruitersError].filter(Boolean).map((message) => (
+          {[analyticsError, recruitersError].filter(Boolean).map((message) => (
             <div key={message} className="rounded-xl border border-amber-200 bg-[#fff8e8] p-3 text-sm text-[#765f2c]">{message}</div>
           ))}
         </div>
@@ -127,33 +126,17 @@ const AdminDashboard = () => {
             ))}
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-            <section className="overflow-hidden rounded-2xl border border-[#e8f5ee] bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-[#e8f5ee] px-5 py-4">
+          <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <section className="rounded-2xl border border-[#e8f5ee] bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-[#1a2a3a]">Moderation Queue Preview</h2>
-                  <p className="text-xs text-[#8aa89a]">Pending drivers returned by the moderation API</p>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff6df]"><FileText className="h-6 w-6 text-[#8d6c2d]" /></div>
+                  <h2 className="mt-4 text-lg font-bold text-[#1a2a3a]">Driver moderation</h2>
+                  <p className="mt-1 max-w-xl text-sm text-[#718078]">{pendingDrivers ? `${pendingDrivers} driver profile${pendingDrivers === 1 ? " is" : "s are"} waiting for review.` : "There are currently no pending driver profiles."}</p>
                 </div>
-                <Link to="/admin/moderation" className="flex items-center gap-1 text-sm font-semibold text-[#2d6a4f] hover:underline">
+                <Link to="/admin/moderation" className="inline-flex items-center justify-center gap-1 rounded-xl bg-[#2d6a4f] px-4 py-2.5 text-sm font-semibold text-white">
                   Open queue <ArrowRight className="h-4 w-4" />
                 </Link>
-              </div>
-              <div className="divide-y divide-[#eef4ef]">
-                {drivers.length ? (
-                  drivers.slice(0, 5).map((driver) => (
-                    <div key={driver.id} className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-[#f8fbf9]">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[#1a2a3a]">{driver.full_name || `Driver #${driver.id}`}</p>
-                        <p className="mt-0.5 text-xs text-[#8aa89a]">CDL {driver.cdl_class || "—"} · {driver.years_experience ?? 0} years experience</p>
-                      </div>
-                      <StatusBadge status={driver.status || "pending"} />
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-5 py-10 text-center text-sm text-[#8aa89a]">
-                    {error ? "Queue data is unavailable until the backend moderation query is fixed." : "No pending drivers returned by the API."}
-                  </div>
-                )}
               </div>
             </section>
 

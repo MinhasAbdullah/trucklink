@@ -17,24 +17,24 @@ import { Link } from "react-router-dom";
 const roles = [
   {
     title: "Drivers",
-    description: "Build a verified driver profile, track moderation status, and become discoverable to recruiters.",
+    description: "Build a verified driver profile, track moderation status, register truck availability, and review freight matches.",
     icon: Truck,
     to: "/auth?role=driver",
-    bullets: ["Create a structured profile", "Track approval status", "Get matched to opportunities"],
+    bullets: ["Create a structured profile", "Register truck availability", "Review calculated matches"],
   },
   {
     title: "Recruiters",
-    description: "Create a company profile, post driving jobs, and work with approved driver candidates.",
+    description: "Create a company profile, post driving jobs and freight loads, and connect with suitable drivers and trucks.",
     icon: Briefcase,
     to: "/auth?role=recruiter",
-    bullets: ["Manage recruiter profile", "Post driving positions", "Review approved talent"],
+    bullets: ["Post driving positions", "Create freight loads", "Run truck/load matching"],
   },
   {
     title: "Platform Admins",
-    description: "Moderate driver profiles, manage recruiter accounts, and monitor platform activity.",
+    description: "Moderate driver profiles, manage recruiter accounts, monitor analytics, and oversee freight operations.",
     icon: ShieldCheck,
     to: "/auth?role=admin",
-    bullets: ["Moderation queue", "Recruiter controls", "Analytics dashboard"],
+    bullets: ["Moderation queue", "Recruiter controls", "Freight operations"],
   },
 ];
 
@@ -98,7 +98,7 @@ const LandingPage = () => {
                 Connect qualified drivers with the recruiters who need them.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-[#5d7468] sm:text-lg">
-                TruckLink brings driver onboarding, admin moderation, recruiter account management, and hiring workflows into one role-based platform.
+                TruckLink brings driver onboarding, profile review, recruiter management, freight planning, document uploads, and smart matching into one secure platform.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -115,7 +115,7 @@ const LandingPage = () => {
                 </Link>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#61786c]">
-                {["JWT role access", "Admin moderation", "API-connected dashboards"].map((item) => (
+                {["Secure role access", "Document uploads", "Live freight matching"].map((item) => (
                   <span key={item} className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#2d6a4f]" /> {item}</span>
                 ))}
               </div>
@@ -218,7 +218,7 @@ const LandingPage = () => {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#dceee5]">Ready to use TruckLink?</p>
               <h2 className="mt-3 text-3xl font-black">Start with the role that matches your work.</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#dceee5]">Driver, recruiter, and admin experiences are protected separately and connected to the backend through JWT authentication.</p>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#dceee5]">Drivers, recruiters, and administrators each get a secure experience tailored to their role.</p>
             </div>
             <Link to="/roles" className="mt-6 inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[#fff6df] px-6 py-3.5 text-sm font-bold text-[#29483a] shadow-lg transition hover:-translate-y-0.5 lg:mt-0">Choose a role <ArrowRight className="h-4 w-4" /></Link>
           </div>
