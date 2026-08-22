@@ -1,16 +1,68 @@
-# React + Vite
+# TruckLink Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Production-oriented React + TailwindCSS frontend aligned to the supplied `backend(2).zip` API surface. The backend is not modified by this package.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-## React Compiler
+By default Vite proxies `/api` and `/ws` to `VITE_BACKEND_URL`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Production environment
 
-## Expanding the ESLint configuration
+When frontend and backend are deployed on different domains, set:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```env
+VITE_API_BASE_URL=https://YOUR-BACKEND-DOMAIN/api
+VITE_BACKEND_URL=https://YOUR-BACKEND-DOMAIN
+VITE_WS_URL=wss://YOUR-BACKEND-DOMAIN/ws/realtime/
+```
+
+`VITE_WS_URL` is optional when it can be derived from `VITE_BACKEND_URL`.
+
+## Routes
+
+### Public
+- `/` — landing page
+- `/roles` — role selection
+- `/auth?role=driver|recruiter|admin` — authentication
+
+### Driver
+- `/driver` — profile/status redirect
+- `/driver/profile` — create or edit driver profile
+- `/driver/status` — moderation status and profile summary
+- `/driver/trucks` — truck management, image/license upload, matching
+- `/driver/matches` — freight matches
+
+### Recruiter
+- `/recruiter/dashboard` — recruiter profile and job postings
+- `/recruiter/loads` — load management, image/document upload, matching
+- `/recruiter/matches` — freight matches
+
+### Admin
+- `/admin/dashboard` — platform overview
+- `/admin/moderation` — driver moderation
+- `/admin/analytics` — platform analytics
+- `/admin/recruiters` — recruiter account management
+- `/admin/operations` — loads, trucks, matches, statistics, and live activity
+
+## Uploads
+
+The supplied backend's shared upload service is used by the freight forms. Uploaded URLs are persisted in fields already exposed by the backend:
+
+- Load image
+- Load document
+- Truck image
+- Truck license document
+
+## Compatibility notes
+
+The frontend only calls routes present in `backend(2).zip`. It does not require master-data CRUD routes or separate DriverDocument CRUD routes.
+
+The backend's driver profile serializer accepts endorsement, equipment, and region relationships but does not provide lookup endpoints for their display values. The production UI therefore does not ask users to enter raw database IDs.
+
+The moderation queue route exists in the supplied backend. If that route returns a server error, the frontend presents a normal retry state rather than exposing implementation details.
